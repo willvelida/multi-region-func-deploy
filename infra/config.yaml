@@ -1,0 +1,20 @@
+common:
+  project: 'wvmultiregion'
+  appMaximumInstances: 3
+  logRetentionInDays: 30
+dev:
+  locations:
+    australiaeast:
+      regionShortCode: syd
+      resourceGroupName: rg-wvmultiregion-dev-syd
+    australiasoutheast:
+      regionShortCode: mel
+      resourceGroupName: rg-wvmultiregion-dev-mel
+prod:
+  locations:
+    australiaeast:
+      regionShortCode: syd
+      resourceGroupName: rg-wvmultiregion-prod-syd
+    australiasoutheast:
+      regionShortCode: mel
+      resourceGroupName: rg-wvmultiregion-prod-mel
