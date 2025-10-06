@@ -16,7 +16,7 @@ param location string = resourceGroup().location
 @description('Specifies the resource tags')
 param tags object
 
-resource keyVault 'Microsoft.KeyVault/vaults@2025-05-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' = {
   name: name
   location: location
   tags: tags
