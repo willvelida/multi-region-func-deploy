@@ -26,11 +26,11 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
 
 module deploymentIdentity 'deploymentUai.bicep' = {
   name: 'deploymentUai'
-  scope: resourceGroup
   params: {
     name: managedIdentityName
     githubOrganization: githubOrganization
     githubRepository: githubRepository
+    resourceGroupName: resourceGroup.name
     location: location
     tags: tags
   }
@@ -44,3 +44,4 @@ output deploymentPrincipalId string = deploymentIdentity.outputs.principalId
 
 @description('The client Id of the deployment managed identity')
 output deploymentClientId string = deploymentIdentity.outputs.clientId
+
