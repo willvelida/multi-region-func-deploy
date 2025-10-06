@@ -1,0 +1,92 @@
+name: Deploy Bicep template
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-to-melbourne:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Bicep Lint
+        run: |
+          az bicep build --file infra/main.bicep
+
+      - name: Validate Bicep Template to Australia Southeast
+        run: |
+          az deployment sub validate \
+            --location ${{ vars.SECONDARY_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environment=${{ vars.ENVIRONMENT }} location=${{ vars.SECONDARY_LOCATION }}
+
+      - name: What-If Australia Southeast
+        run: |
+          az deployment sub what-if \
+            --location ${{ vars.SECONDARY_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environment=${{ vars.ENVIRONMENT }} location=${{ vars.SECONDARY_LOCATION }}
+
+      - name: Deploy to Australia Southeast
+        run: |
+          az deployment sub create \
+            --location ${{ vars.SECONDARY_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environment=${{ vars.ENVIRONMENT }} location=${{ vars.SECONDARY_LOCATION }} \
+            --name "deploy-${{ github.run_number }}-ase"
+
+  deploy-to-sydney:
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: deploy-to-melbourne
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate Bicep Template to Australia East
+        run: |
+          az deployment sub validate \
+            --location ${{ vars.PRIMARY_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environment=${{ vars.ENVIRONMENT }} location=${{ vars.PRIMARY_LOCATION }}
+
+      - name: What-If Australia East
+        run: |
+          az deployment sub what-if \
+            --location ${{ vars.PRIMARY_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environment=${{ vars.ENVIRONMENT }} location=${{ vars.PRIMARY_LOCATION }}
+
+      - name: Deploy to Australia East
+        run: |
+          az deployment sub create \
+            --location ${{ vars.PRIMARY_LOCATION }} \
+            --template-file infra/main.bicep \
+            --parameters environment=${{ vars.ENVIRONMENT }} location=${{ vars.PRIMARY_LOCATION }} \
+            --name "deploy-${{ github.run_number }}-ae"
